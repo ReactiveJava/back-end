@@ -1,0 +1,2 @@
+rootProject.name = 'reactive-shop-backend'
+include 'product-service', 'order-service', 'payment-service', 'notification-service', 'bank-mock-service', 'admin-service'

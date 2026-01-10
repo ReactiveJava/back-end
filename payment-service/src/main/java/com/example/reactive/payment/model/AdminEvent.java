@@ -1,0 +1,11 @@
+package com.example.reactive.payment.model;
+
+import java.time.Instant;
+import java.util.UUID;
+
+public record AdminEvent(
+        String type,
+        UUID orderId,
+        Instant timestamp
+) {
+}

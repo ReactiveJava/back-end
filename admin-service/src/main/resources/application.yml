@@ -1,0 +1,13 @@
+server:
+  port: 8086
+spring:
+  application:
+    name: admin-service
+app:
+  cors:
+    allowed-origins: ${FRONTEND_ORIGIN:http://localhost:5173}
+  payments:
+    base-url: ${PAYMENT_SERVICE_URL:http://payment-service:8083}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui

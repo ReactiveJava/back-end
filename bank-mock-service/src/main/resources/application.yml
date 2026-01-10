@@ -1,0 +1,15 @@
+server:
+  port: 8085
+spring:
+  application:
+    name: bank-mock-service
+app:
+  cors:
+    allowed-origins: ${FRONTEND_ORIGIN:http://localhost:5173}
+  bank:
+    failure-rate: ${BANK_FAILURE_RATE:0.05}
+    min-delay-ms: ${BANK_MIN_DELAY_MS:500}
+    max-delay-ms: ${BANK_MAX_DELAY_MS:3000}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui

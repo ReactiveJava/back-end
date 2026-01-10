@@ -1,0 +1,16 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: product-service
+  r2dbc:
+    url: r2dbc:postgresql://postgres:5432/products
+    username: ${POSTGRES_USER:shop}
+    password: ${POSTGRES_PASSWORD:shop}
+    initialization-mode: always
+app:
+  cors:
+    allowed-origins: ${FRONTEND_ORIGIN:http://localhost:5173}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui

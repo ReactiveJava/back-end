@@ -1,0 +1,11 @@
+server:
+  port: 8084
+spring:
+  application:
+    name: notification-service
+app:
+  cors:
+    allowed-origins: ${FRONTEND_ORIGIN:http://localhost:5173}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui

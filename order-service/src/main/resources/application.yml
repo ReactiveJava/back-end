@@ -1,0 +1,26 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: order-service
+  r2dbc:
+    url: r2dbc:postgresql://postgres:5432/orders
+    username: ${POSTGRES_USER:shop}
+    password: ${POSTGRES_PASSWORD:shop}
+    initialization-mode: always
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+app:
+  cors:
+    allowed-origins: ${FRONTEND_ORIGIN:http://localhost:5173}
+  products:
+    base-url: ${PRODUCT_SERVICE_URL:http://product-service:8081}
+  notifications:
+    base-url: ${NOTIFICATION_SERVICE_URL:http://notification-service:8084}
+  admin:
+    base-url: ${ADMIN_SERVICE_URL:http://admin-service:8086}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui

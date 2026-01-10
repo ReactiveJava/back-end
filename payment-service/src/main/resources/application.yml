@@ -1,0 +1,25 @@
+server:
+  port: 8083
+spring:
+  application:
+    name: payment-service
+  r2dbc:
+    url: r2dbc:postgresql://postgres:5432/payments
+    username: ${POSTGRES_USER:shop}
+    password: ${POSTGRES_PASSWORD:shop}
+    initialization-mode: always
+app:
+  cors:
+    allowed-origins: ${FRONTEND_ORIGIN:http://localhost:5173}
+  bank:
+    base-url: ${BANK_SERVICE_URL:http://bank-mock-service:8085}
+    callback-url: ${BANK_CALLBACK_URL:http://payment-service:8083/api/payments/webhook}
+  orders:
+    base-url: ${ORDER_SERVICE_URL:http://order-service:8082}
+  notifications:
+    base-url: ${NOTIFICATION_SERVICE_URL:http://notification-service:8084}
+  admin:
+    base-url: ${ADMIN_SERVICE_URL:http://admin-service:8086}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
