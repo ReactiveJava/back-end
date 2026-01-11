@@ -2,6 +2,7 @@ package com.example.reactive.payment.client;
 
 import com.example.reactive.payment.model.AdminEvent;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -18,6 +19,15 @@ public class AdminClient {
         return webClient.post()
                 .uri("/api/admin/events")
                 .bodyValue(event)
+                .retrieve()
+                .bodyToMono(Void.class);
+    }
+
+    public Mono<Void> publishRaw(String payload) {
+        return webClient.post()
+                .uri("/api/admin/events")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(payload)
                 .retrieve()
                 .bodyToMono(Void.class);
     }

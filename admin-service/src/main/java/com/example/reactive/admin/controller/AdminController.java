@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,14 +28,10 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/api/admin")
 @Tag(name = "Admin")
+@RequiredArgsConstructor
 public class AdminController {
     private final AdminMetricsService metricsService;
     private final PaymentClient paymentClient;
-
-    public AdminController(AdminMetricsService metricsService, PaymentClient paymentClient) {
-        this.metricsService = metricsService;
-        this.paymentClient = paymentClient;
-    }
 
     @PostMapping("/events")
     @Operation(summary = "Ingest admin event")

@@ -2,6 +2,10 @@ package com.example.reactive.order.model;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
@@ -9,10 +13,15 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Table("order_items")
+@Getter
+@Setter
+@NoArgsConstructor
 public class OrderItem implements Persistable<UUID> {
     @Id
     private UUID id;
     @Transient
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private boolean newEntity;
     @Column("order_id")
     private UUID orderId;
@@ -21,10 +30,6 @@ public class OrderItem implements Persistable<UUID> {
     private String name;
     private BigDecimal price;
     private int quantity;
-
-    public OrderItem() {
-        this.newEntity = false;
-    }
 
     public OrderItem(UUID id, UUID orderId, UUID productId, String name, BigDecimal price, int quantity) {
         this.id = id;
@@ -39,53 +44,5 @@ public class OrderItem implements Persistable<UUID> {
     @Override
     public boolean isNew() {
         return newEntity;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(UUID orderId) {
-        this.orderId = orderId;
-    }
-
-    public UUID getProductId() {
-        return productId;
-    }
-
-    public void setProductId(UUID productId) {
-        this.productId = productId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
     }
 }

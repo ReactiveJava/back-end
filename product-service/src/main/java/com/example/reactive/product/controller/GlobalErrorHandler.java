@@ -2,6 +2,7 @@ package com.example.reactive.product.controller;
 
 import com.example.reactive.product.model.ApiError;
 import java.time.Instant;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.support.WebExchangeBindException;
 import reactor.core.publisher.Mono;
 
 @RestControllerAdvice
+@Slf4j
 @Order(-2)
 public class GlobalErrorHandler {
     @ExceptionHandler(WebExchangeBindException.class)
@@ -32,6 +34,7 @@ public class GlobalErrorHandler {
 
     @ExceptionHandler(Throwable.class)
     public Mono<ResponseEntity<ApiError>> handleUnexpected(Throwable ex, ServerWebExchange exchange) {
+        log.error("Unexpected error handling request {}", exchange.getRequest().getPath().value(), ex);
         return buildError(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error", exchange);
     }
 

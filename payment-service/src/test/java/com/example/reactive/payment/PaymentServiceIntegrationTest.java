@@ -10,6 +10,7 @@ import com.example.reactive.payment.model.PaymentRequest;
 import com.example.reactive.payment.model.PaymentResponse;
 import com.example.reactive.payment.model.PaymentSessionResponse;
 import com.example.reactive.payment.model.PaymentStatus;
+import com.example.reactive.payment.outbox.PaymentOutboxRepository;
 import com.example.reactive.payment.repository.PaymentRepository;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -21,6 +22,7 @@ import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -114,6 +116,10 @@ class PaymentServiceIntegrationTest {
         registry.add("app.orders.base-url", () -> MOCK_WEB_SERVER.url("/").toString());
         registry.add("app.notifications.base-url", () -> MOCK_WEB_SERVER.url("/").toString());
         registry.add("app.admin.base-url", () -> MOCK_WEB_SERVER.url("/").toString());
+        registry.add("app.outbox.poll-interval-ms", () -> "100");
+        registry.add("app.outbox.batch-size", () -> "50");
+        registry.add("app.outbox.initial-backoff-ms", () -> "100");
+        registry.add("app.outbox.max-backoff-ms", () -> "1000");
     }
 
     @Autowired
@@ -122,6 +128,9 @@ class PaymentServiceIntegrationTest {
     @Autowired
     private PaymentRepository paymentRepository;
 
+    @Autowired
+    private PaymentOutboxRepository outboxRepository;
+
     @AfterAll
     static void tearDown() throws IOException {
         MOCK_WEB_SERVER.shutdown();
@@ -129,7 +138,7 @@ class PaymentServiceIntegrationTest {
 
     @BeforeEach
     void resetState() {
-        StepVerifier.create(paymentRepository.deleteAll()).verifyComplete();
+        StepVerifier.create(paymentRepository.deleteAll().then(outboxRepository.deleteAll())).verifyComplete();
         ORDER_STATUS.set(OrderStatus.CREATED);
         UPDATED_ORDER_STATUS.set(null);
         ADMIN_EVENTS.set(0);
@@ -159,7 +168,7 @@ class PaymentServiceIntegrationTest {
                     assertThat(saved.getProviderSessionId()).isEqualTo("session-1");
                 })
                 .verifyComplete();
-        assertThat(ADMIN_EVENTS.get()).isEqualTo(1);
+        awaitCounter(ADMIN_EVENTS, 1);
     }
 
     @Test
@@ -207,8 +216,8 @@ class PaymentServiceIntegrationTest {
         assertThat(response).isNotNull();
         assertThat(response.status()).isEqualTo(PaymentStatus.PAID);
         assertThat(UPDATED_ORDER_STATUS.get()).isEqualTo(OrderStatus.PAID);
-        assertThat(NOTIFICATION_EVENTS.get()).isEqualTo(1);
-        assertThat(ADMIN_EVENTS.get()).isEqualTo(1);
+        awaitCounter(NOTIFICATION_EVENTS, 1);
+        awaitCounter(ADMIN_EVENTS, 1);
     }
 
     @Test
@@ -304,5 +313,21 @@ class PaymentServiceIntegrationTest {
                 ORDER_ID,
                 ORDER_STATUS.get()
         );
+    }
+
+    private static void awaitCounter(AtomicInteger counter, int expected) {
+        long deadline = System.currentTimeMillis() + 5000;
+        while (System.currentTimeMillis() < deadline) {
+            if (counter.get() >= expected) {
+                return;
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                Assertions.fail("Interrupted while waiting for outbox events");
+            }
+        }
+        Assertions.fail("Expected at least " + expected + " events but got " + counter.get());
     }
 }

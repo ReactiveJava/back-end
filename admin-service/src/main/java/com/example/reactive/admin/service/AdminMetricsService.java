@@ -6,17 +6,15 @@ import java.time.Instant;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.LongAdder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 @Service
+@Slf4j
 public class AdminMetricsService {
-    private static final Logger log = LoggerFactory.getLogger(AdminMetricsService.class);
-
     private final Deque<Instant> orderEvents = new ConcurrentLinkedDeque<>();
     private final LongAdder paymentsSuccess = new LongAdder();
     private final LongAdder paymentsFailed = new LongAdder();

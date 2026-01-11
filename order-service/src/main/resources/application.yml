@@ -17,6 +17,8 @@ app:
     allowed-origins: ${FRONTEND_ORIGIN:http://localhost:5173}
   products:
     base-url: ${PRODUCT_SERVICE_URL:http://product-service:8081}
+    cache-ttl-ms: ${PRODUCT_CACHE_TTL_MS:30000}
+    cache-max-entries: ${PRODUCT_CACHE_MAX_ENTRIES:5000}
   notifications:
     base-url: ${NOTIFICATION_SERVICE_URL:http://notification-service:8084}
   admin:

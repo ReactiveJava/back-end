@@ -14,7 +14,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.testcontainers.containers.DockerComposeContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -24,19 +23,21 @@ class EndToEndFlowTest {
     private static final DockerComposeContainer<?> COMPOSE = new DockerComposeContainer<>(
             new File("../../docker-compose.test.yml")
     )
-            .withBuild(true)
-            .withExposedService("product-service", 8081, Wait.forHttp("/v3/api-docs").forStatusCode(200))
-            .withExposedService("order-service", 8082, Wait.forHttp("/v3/api-docs").forStatusCode(200))
-            .withExposedService("payment-service", 8083, Wait.forHttp("/v3/api-docs").forStatusCode(200))
-            .withExposedService("notification-service", 8084, Wait.forHttp("/v3/api-docs").forStatusCode(200))
-            .withExposedService("bank-mock-service", 8085, Wait.forHttp("/v3/api-docs").forStatusCode(200))
-            .withExposedService("admin-service", 8086, Wait.forHttp("/v3/api-docs").forStatusCode(200));
+            .withLocalCompose(true)
+            .withBuild(true);
 
     @Test
     void endToEndHappyPathPaymentFlow() {
-        WebTestClient productClient = clientFor("product-service", 8081);
-        WebTestClient orderClient = clientFor("order-service", 8082);
-        WebTestClient paymentClient = clientFor("payment-service", 8083);
+        waitForService("http://localhost:8081/v3/api-docs");
+        waitForService("http://localhost:8082/v3/api-docs");
+        waitForService("http://localhost:8083/v3/api-docs");
+        waitForService("http://localhost:8084/v3/api-docs");
+        waitForService("http://localhost:8085/v3/api-docs");
+        waitForService("http://localhost:8086/v3/api-docs");
+
+        WebTestClient productClient = clientFor(8081);
+        WebTestClient orderClient = clientFor(8082);
+        WebTestClient paymentClient = clientFor(8083);
 
         List<Map<String, Object>> products = productClient.get()
                 .uri("/api/products")
@@ -133,12 +134,28 @@ class EndToEndFlowTest {
                 .expectStatus().isBadRequest();
     }
 
-    private static WebTestClient clientFor(String service, int port) {
-        String host = COMPOSE.getServiceHost(service, port);
-        Integer mappedPort = COMPOSE.getServicePort(service, port);
+    private static WebTestClient clientFor(int port) {
         return WebTestClient.bindToServer()
                 .responseTimeout(Duration.ofSeconds(10))
-                .baseUrl("http://" + host + ":" + mappedPort)
+                .baseUrl("http://localhost:" + port)
                 .build();
+    }
+
+    private static void waitForService(String url) {
+        Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+            try {
+                return WebTestClient.bindToServer()
+                        .responseTimeout(Duration.ofSeconds(5))
+                        .baseUrl(url)
+                        .build()
+                        .get()
+                        .exchange()
+                        .returnResult(String.class)
+                        .getStatus()
+                        .is2xxSuccessful();
+            } catch (RuntimeException ex) {
+                return false;
+            }
+        });
     }
 }

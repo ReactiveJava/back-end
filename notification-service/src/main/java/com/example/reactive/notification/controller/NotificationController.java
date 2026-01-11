@@ -4,6 +4,7 @@ import com.example.reactive.notification.model.NotificationEvent;
 import com.example.reactive.notification.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,12 +19,9 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/api/notifications")
 @Tag(name = "Notifications")
+@RequiredArgsConstructor
 public class NotificationController {
     private final NotificationService notificationService;
-
-    public NotificationController(NotificationService notificationService) {
-        this.notificationService = notificationService;
-    }
 
     @PostMapping("/events")
     @Operation(summary = "Publish notification event")

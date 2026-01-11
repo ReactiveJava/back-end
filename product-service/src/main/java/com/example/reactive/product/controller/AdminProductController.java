@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,12 +20,9 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/api/admin/products")
 @Tag(name = "Admin Catalog")
+@RequiredArgsConstructor
 public class AdminProductController {
     private final ProductService productService;
-
-    public AdminProductController(ProductService productService) {
-        this.productService = productService;
-    }
 
     @PostMapping
     @Operation(summary = "Create product")

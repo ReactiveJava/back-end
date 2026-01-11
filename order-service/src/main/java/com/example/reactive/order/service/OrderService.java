@@ -19,8 +19,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,26 +28,14 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class OrderService {
-    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
-
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CartService cartService;
     private final NotificationClient notificationClient;
     private final AdminClient adminClient;
-
-    public OrderService(OrderRepository orderRepository,
-                        OrderItemRepository orderItemRepository,
-                        CartService cartService,
-                        NotificationClient notificationClient,
-                        AdminClient adminClient) {
-        this.orderRepository = orderRepository;
-        this.orderItemRepository = orderItemRepository;
-        this.cartService = cartService;
-        this.notificationClient = notificationClient;
-        this.adminClient = adminClient;
-    }
 
     public Mono<OrderResponse> createOrder(CreateOrderRequest request) {
         return cartService.getCart(request.userId())
@@ -72,20 +60,22 @@ public class OrderService {
                             now
                     );
                     return orderRepository.save(order)
-                            .flatMap(saved -> Flux.fromIterable(cart.items())
-                                    .map(item -> new OrderItem(
-                                            UUID.randomUUID(),
-                                            saved.getId(),
-                                            item.getProductId(),
-                                            item.getName(),
-                                            item.getPrice(),
-                                            item.getQuantity()
-                                    ))
-                                    .flatMap(orderItemRepository::save)
-                                    .then(Mono.just(saved)))
+                            .flatMap(saved -> {
+                                List<OrderItem> items = cart.items().stream()
+                                        .map(item -> new OrderItem(
+                                                UUID.randomUUID(),
+                                                saved.getId(),
+                                                item.getProductId(),
+                                                item.getName(),
+                                                item.getPrice(),
+                                                item.getQuantity()
+                                        ))
+                                        .toList();
+                                return orderItemRepository.saveAll(items).then(Mono.just(saved));
+                            })
                             .flatMap(saved -> cartService.clearCart(request.userId()).thenReturn(saved));
                 })
-                .flatMap(saved -> sendCreatedEvents(saved).thenReturn(saved))
+                .doOnNext(this::publishCreatedEvents)
                 .flatMap(this::toResponse)
                 .doOnNext(response -> log.info("Order created: id={}, userId={}, total={}, status={}",
                         response.id(), response.userId(), response.total(), response.status()));
@@ -126,6 +116,12 @@ public class OrderService {
         );
         AdminEvent adminEvent = new AdminEvent("ORDER_CREATED", order.getId(), Instant.now());
         return notificationClient.publish(event).then(adminClient.publish(adminEvent));
+    }
+
+    private void publishCreatedEvents(Order order) {
+        sendCreatedEvents(order)
+                .doOnError(error -> log.warn("Failed to publish order created events: orderId={}", order.getId(), error))
+                .subscribe();
     }
 
     private Mono<Void> sendStatusEvents(Order order, String reason) {

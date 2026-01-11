@@ -3,14 +3,24 @@ package com.example.reactive.product.model;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Table("products")
-public class Product {
+@Getter
+@Setter
+@NoArgsConstructor
+public class Product implements Persistable<UUID> {
     @Id
     private UUID id;
+    @Transient
+    private boolean newEntity;
     private String name;
     private String description;
     private String category;
@@ -22,11 +32,15 @@ public class Product {
     @Column("updated_at")
     private Instant updatedAt;
 
-    public Product() {
-    }
-
-    public Product(UUID id, String name, String description, String category, BigDecimal price,
-                   String currency, Integer stock, String imageUrl, Instant updatedAt) {
+    public Product(UUID id,
+                   String name,
+                   String description,
+                   String category,
+                   BigDecimal price,
+                   String currency,
+                   Integer stock,
+                   String imageUrl,
+                   Instant updatedAt) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -36,77 +50,15 @@ public class Product {
         this.stock = stock;
         this.imageUrl = imageUrl;
         this.updatedAt = updatedAt;
+        this.newEntity = true;
     }
 
-    public UUID getId() {
-        return id;
+    @Override
+    public boolean isNew() {
+        return newEntity;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
-
-    public Integer getStock() {
-        return stock;
-    }
-
-    public void setStock(Integer stock) {
-        this.stock = stock;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
+    public void markNotNew() {
+        this.newEntity = false;
     }
 }

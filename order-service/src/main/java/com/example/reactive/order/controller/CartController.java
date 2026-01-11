@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,14 +26,10 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/api/cart")
 @Tag(name = "Cart")
+@RequiredArgsConstructor
 public class CartController {
     private final CartService cartService;
     private final CartStreamService cartStreamService;
-
-    public CartController(CartService cartService, CartStreamService cartStreamService) {
-        this.cartService = cartService;
-        this.cartStreamService = cartStreamService;
-    }
 
     @GetMapping("/{userId}")
     @Operation(summary = "Get cart by user id")

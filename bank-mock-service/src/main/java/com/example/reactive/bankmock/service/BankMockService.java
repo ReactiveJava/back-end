@@ -7,8 +7,7 @@ import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -16,9 +15,8 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 @Service
+@Slf4j
 public class BankMockService {
-    private static final Logger log = LoggerFactory.getLogger(BankMockService.class);
-
     private final WebClient webClient;
     private final double failureRate;
     private final long minDelayMs;

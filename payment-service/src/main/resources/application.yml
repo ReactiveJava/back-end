@@ -20,6 +20,13 @@ app:
     base-url: ${NOTIFICATION_SERVICE_URL:http://notification-service:8084}
   admin:
     base-url: ${ADMIN_SERVICE_URL:http://admin-service:8086}
+  outbox:
+    poll-interval-ms: ${OUTBOX_POLL_INTERVAL_MS:1000}
+    batch-size: ${OUTBOX_BATCH_SIZE:200}
+    max-attempts: ${OUTBOX_MAX_ATTEMPTS:10}
+    initial-backoff-ms: ${OUTBOX_INITIAL_BACKOFF_MS:500}
+    max-backoff-ms: ${OUTBOX_MAX_BACKOFF_MS:10000}
+    publish-concurrency: ${OUTBOX_PUBLISH_CONCURRENCY:4}
 springdoc:
   swagger-ui:
     path: /swagger-ui

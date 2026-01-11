@@ -1,5 +1,6 @@
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+    implementation 'com.fasterxml.jackson.module:jackson-module-blackbird'
     implementation "org.postgresql:r2dbc-postgresql:${r2dbcPostgresVersion}"
 }

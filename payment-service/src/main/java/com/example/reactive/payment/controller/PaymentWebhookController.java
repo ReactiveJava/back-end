@@ -5,6 +5,7 @@ import com.example.reactive.payment.model.PaymentResponse;
 import com.example.reactive.payment.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,12 +15,9 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/api/payments/webhook")
 @Tag(name = "Payments")
+@RequiredArgsConstructor
 public class PaymentWebhookController {
     private final PaymentService paymentService;
-
-    public PaymentWebhookController(PaymentService paymentService) {
-        this.paymentService = paymentService;
-    }
 
     @PostMapping
     @Operation(summary = "Bank callback webhook")

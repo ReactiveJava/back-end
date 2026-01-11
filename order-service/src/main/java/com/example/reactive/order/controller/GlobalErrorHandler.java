@@ -2,8 +2,7 @@ package com.example.reactive.order.controller;
 
 import com.example.reactive.order.model.ApiError;
 import java.time.Instant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +16,8 @@ import reactor.core.publisher.Mono;
 
 @RestControllerAdvice
 @Order(-2)
+@Slf4j
 public class GlobalErrorHandler {
-    private static final Logger log = LoggerFactory.getLogger(GlobalErrorHandler.class);
-
     @ExceptionHandler(WebExchangeBindException.class)
     public Mono<ResponseEntity<ApiError>> handleValidation(WebExchangeBindException ex, ServerWebExchange exchange) {
         String message = ex.getFieldErrors().stream()

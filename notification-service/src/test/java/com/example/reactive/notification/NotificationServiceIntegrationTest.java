@@ -39,7 +39,7 @@ class NotificationServiceIntegrationTest {
                 Instant.now()
         );
 
-        StepVerifier.create(stream.take(1))
+        StepVerifier.create(stream.filter(sse -> sse.data() != null).take(1))
                 .then(() -> webTestClient.post()
                         .uri("/api/notifications/events")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -71,7 +71,7 @@ class NotificationServiceIntegrationTest {
                 Instant.now()
         );
 
-        StepVerifier.create(stream.take(1))
+        StepVerifier.create(stream.filter(sse -> sse.data() != null).take(1))
                 .then(() -> webTestClient.post()
                         .uri("/api/notifications/events")
                         .contentType(MediaType.APPLICATION_JSON)

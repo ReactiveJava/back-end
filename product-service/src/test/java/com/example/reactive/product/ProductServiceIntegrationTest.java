@@ -162,7 +162,7 @@ class ProductServiceIntegrationTest {
                 .expectBody(ApiError.class)
                 .value(error -> {
                     assertThat(error.status()).isEqualTo(400);
-                    assertThat(error.message()).contains("must not be blank");
+                    assertThat(error.message()).containsAnyOf("must not be blank", "не должно быть пустым");
                 });
     }
 
@@ -185,7 +185,9 @@ class ProductServiceIntegrationTest {
                 "https://example.com/sse.png"
         );
 
-        StepVerifier.create(stream.take(1))
+        StepVerifier.create(stream.filter(sse -> sse.data() != null
+                        && "SSE Lamp".equals(sse.data().product().name()))
+                .take(1))
                 .then(() -> webTestClient.post()
                         .uri("/api/admin/products")
                         .contentType(MediaType.APPLICATION_JSON)

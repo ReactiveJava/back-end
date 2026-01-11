@@ -8,33 +8,27 @@ import com.example.reactive.product.repository.ProductRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
-import org.springframework.http.HttpStatus;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class ProductService {
-    private static final Logger log = LoggerFactory.getLogger(ProductService.class);
-
     private final ProductRepository repository;
     private final R2dbcEntityTemplate template;
-    private final Sinks.Many<ProductEvent> productSink;
-
-    public ProductService(ProductRepository repository, R2dbcEntityTemplate template) {
-        this.repository = repository;
-        this.template = template;
-        this.productSink = Sinks.many().multicast().onBackpressureBuffer();
-    }
+    private final Sinks.Many<ProductEvent> productSink = Sinks.many().multicast().onBackpressureBuffer();
 
     public Flux<ProductResponse> search(String query, String category, BigDecimal minPrice, BigDecimal maxPrice,
                                         int page, int size) {
@@ -126,11 +120,14 @@ public class ProductService {
     }
 
     public Flux<ServerSentEvent<ProductEvent>> stream() {
-        return productSink.asFlux()
+        ServerSentEvent<ProductEvent> connected = ServerSentEvent.<ProductEvent>builder()
+                .comment("connected")
+                .build();
+        return Flux.concat(Mono.just(connected), productSink.asFlux()
                 .map(event -> ServerSentEvent.builder(event)
                         .event(event.type())
                         .id(event.product().id().toString())
-                        .build());
+                        .build()));
     }
 
     private void publishEvent(String type, ProductResponse response) {

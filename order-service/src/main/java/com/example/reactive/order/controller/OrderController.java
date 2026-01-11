@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,12 +24,9 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/api/orders")
 @Tag(name = "Orders")
+@RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderService;
-
-    public OrderController(OrderService orderService) {
-        this.orderService = orderService;
-    }
 
     @PostMapping
     @Operation(summary = "Create order from cart")
