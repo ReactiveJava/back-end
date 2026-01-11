@@ -19,6 +19,8 @@ import com.example.reactive.payment.repository.PaymentRepository;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -32,6 +34,8 @@ import reactor.core.publisher.Mono;
 
 @Service
 public class PaymentService {
+    private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
+
     private final PaymentRepository repository;
     private final R2dbcEntityTemplate template;
     private final OrderClient orderClient;
@@ -75,6 +79,10 @@ public class PaymentService {
                             Instant.now()
                     );
                     return repository.save(payment)
+                            .doOnNext(saved -> log.info(
+                                    "Payment initiated: paymentId={}, orderId={}, userId={}, amount={}, currency={}, method={}",
+                                    saved.getId(), saved.getOrderId(), saved.getUserId(),
+                                    saved.getAmount(), saved.getCurrency(), saved.getProvider()))
                             .flatMap(saved -> adminClient.publish(new AdminEvent(
                                     "PAYMENT_INITIATED",
                                     saved.getOrderId(),
@@ -118,7 +126,9 @@ public class PaymentService {
                 .flatMap(saved -> orderClient.updateStatus(saved.getOrderId(), orderStatus, callback.reason())
                         .then(sendPaymentEvents(saved, status, callback.reason()))
                         .thenReturn(saved))
-                .map(this::toResponse);
+                .map(this::toResponse)
+                .doOnNext(response -> log.info("Payment callback handled: paymentId={}, orderId={}, status={}, reason={}",
+                        response.id(), response.orderId(), response.status(), callback.reason()));
     }
 
     public Mono<PaymentResponse> getPayment(UUID paymentId) {

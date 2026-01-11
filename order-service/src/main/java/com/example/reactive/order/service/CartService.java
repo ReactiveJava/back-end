@@ -10,12 +10,16 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 @Service
 public class CartService {
+    private static final Logger log = LoggerFactory.getLogger(CartService.class);
+
     private static final String CART_KEY_PREFIX = "cart:";
 
     private final ReactiveRedisTemplate<String, Cart> redisTemplate;
@@ -48,7 +52,11 @@ public class CartService {
                 .map(tuple -> updateCartWithProduct(tuple.getT1(), tuple.getT2(), quantity))
                 .flatMap(cart -> saveCart(userId, cart))
                 .map(this::toResponse)
-                .doOnNext(cartStreamService::emit);
+                .doOnNext(response -> {
+                    log.info("Cart item added: userId={}, productId={}, quantity={}, total={}, items={}",
+                            userId, productId, quantity, response.total(), response.items().size());
+                    cartStreamService.emit(response);
+                });
     }
 
     public Mono<CartResponse> updateItem(String userId, UUID productId, int quantity) {
@@ -68,7 +76,11 @@ public class CartService {
                 })
                 .flatMap(cart -> saveCart(userId, cart))
                 .map(this::toResponse)
-                .doOnNext(cartStreamService::emit);
+                .doOnNext(response -> {
+                    log.info("Cart item updated: userId={}, productId={}, quantity={}, total={}, items={}",
+                            userId, productId, quantity, response.total(), response.items().size());
+                    cartStreamService.emit(response);
+                });
     }
 
     public Mono<CartResponse> removeItem(String userId, UUID productId) {
@@ -83,13 +95,20 @@ public class CartService {
                 })
                 .flatMap(cart -> saveCart(userId, cart))
                 .map(this::toResponse)
-                .doOnNext(cartStreamService::emit);
+                .doOnNext(response -> {
+                    log.info("Cart item removed: userId={}, productId={}, total={}, items={}",
+                            userId, productId, response.total(), response.items().size());
+                    cartStreamService.emit(response);
+                });
     }
 
     public Mono<Void> clearCart(String userId) {
         return redisTemplate.opsForValue()
                 .delete(cartKey(userId))
-                .doOnSuccess(ignored -> cartStreamService.emit(toResponse(emptyCart(userId))))
+                .doOnSuccess(ignored -> {
+                    log.info("Cart cleared: userId={}", userId);
+                    cartStreamService.emit(toResponse(emptyCart(userId)));
+                })
                 .then();
     }
 

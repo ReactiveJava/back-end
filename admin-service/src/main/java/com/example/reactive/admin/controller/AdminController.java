@@ -39,8 +39,7 @@ public class AdminController {
     @PostMapping("/events")
     @Operation(summary = "Ingest admin event")
     public Mono<Void> ingest(@RequestBody AdminEvent event) {
-        metricsService.ingest(event);
-        return Mono.empty();
+        return metricsService.ingest(event);
     }
 
     @GetMapping(value = "/metrics/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

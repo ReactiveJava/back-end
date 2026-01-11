@@ -19,6 +19,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,6 +29,8 @@ import reactor.core.publisher.Mono;
 
 @Service
 public class OrderService {
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CartService cartService;
@@ -82,7 +86,9 @@ public class OrderService {
                             .flatMap(saved -> cartService.clearCart(request.userId()).thenReturn(saved));
                 })
                 .flatMap(saved -> sendCreatedEvents(saved).thenReturn(saved))
-                .flatMap(this::toResponse);
+                .flatMap(this::toResponse)
+                .doOnNext(response -> log.info("Order created: id={}, userId={}, total={}, status={}",
+                        response.id(), response.userId(), response.total(), response.status()));
     }
 
     public Mono<OrderResponse> getOrder(UUID orderId) {
@@ -105,7 +111,9 @@ public class OrderService {
                     return orderRepository.save(order);
                 })
                 .flatMap(saved -> sendStatusEvents(saved, request.reason()).thenReturn(saved))
-                .flatMap(this::toResponse);
+                .flatMap(this::toResponse)
+                .doOnNext(response -> log.info("Order status updated: id={}, status={}, reason={}",
+                        response.id(), response.status(), request.reason()));
     }
 
     private Mono<Void> sendCreatedEvents(Order order) {

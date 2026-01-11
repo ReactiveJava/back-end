@@ -8,6 +8,8 @@ import com.example.reactive.product.repository.ProductRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Criteria;
@@ -22,6 +24,8 @@ import org.springframework.http.HttpStatus;
 
 @Service
 public class ProductService {
+    private static final Logger log = LoggerFactory.getLogger(ProductService.class);
+
     private final ProductRepository repository;
     private final R2dbcEntityTemplate template;
     private final Sinks.Many<ProductEvent> productSink;
@@ -78,7 +82,11 @@ public class ProductService {
 
         return repository.save(product)
                 .map(this::toResponse)
-                .doOnNext(response -> publishEvent("PRODUCT_CREATED", response));
+                .doOnNext(response -> {
+                    log.info("Product created: id={}, name={}, category={}, price={}, stock={}",
+                            response.id(), response.name(), response.category(), response.price(), response.stock());
+                    publishEvent("PRODUCT_CREATED", response);
+                });
     }
 
     public Mono<ProductResponse> update(UUID id, ProductRequest request) {
@@ -96,7 +104,11 @@ public class ProductService {
                     return repository.save(existing);
                 })
                 .map(this::toResponse)
-                .doOnNext(response -> publishEvent("PRODUCT_UPDATED", response));
+                .doOnNext(response -> {
+                    log.info("Product updated: id={}, name={}, category={}, price={}, stock={}",
+                            response.id(), response.name(), response.category(), response.price(), response.stock());
+                    publishEvent("PRODUCT_UPDATED", response);
+                });
     }
 
     public Mono<Void> delete(UUID id) {
@@ -104,7 +116,12 @@ public class ProductService {
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found")))
                 .flatMap(existing -> repository.deleteById(existing.getId())
                         .thenReturn(existing))
-                .doOnNext(existing -> publishEvent("PRODUCT_DELETED", toResponse(existing)))
+                .doOnNext(existing -> {
+                    ProductResponse response = toResponse(existing);
+                    log.info("Product deleted: id={}, name={}, category={}",
+                            response.id(), response.name(), response.category());
+                    publishEvent("PRODUCT_DELETED", response);
+                })
                 .then();
     }
 

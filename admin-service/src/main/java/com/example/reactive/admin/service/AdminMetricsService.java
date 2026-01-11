@@ -6,31 +6,39 @@ import java.time.Instant;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.LongAdder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 @Service
 public class AdminMetricsService {
+    private static final Logger log = LoggerFactory.getLogger(AdminMetricsService.class);
+
     private final Deque<Instant> orderEvents = new ConcurrentLinkedDeque<>();
     private final LongAdder paymentsSuccess = new LongAdder();
     private final LongAdder paymentsFailed = new LongAdder();
     private final Sinks.Many<AdminEvent> eventSink = Sinks.many().multicast().onBackpressureBuffer();
 
-    public void ingest(AdminEvent event) {
-        if (event == null) {
-            return;
-        }
-        if ("ORDER_CREATED".equalsIgnoreCase(event.type())) {
-            orderEvents.add(event.timestamp());
-        }
-        if ("PAYMENT_SUCCESS".equalsIgnoreCase(event.type())) {
-            paymentsSuccess.increment();
-        }
-        if ("PAYMENT_FAILED".equalsIgnoreCase(event.type())) {
-            paymentsFailed.increment();
-        }
-        eventSink.tryEmitNext(event);
+    public Mono<Void> ingest(AdminEvent event) {
+        return Mono.fromRunnable(() -> {
+            if (event == null) {
+                return;
+            }
+            log.info("Admin event ingested: type={}, orderId={}", event.type(), event.orderId());
+            if ("ORDER_CREATED".equalsIgnoreCase(event.type())) {
+                orderEvents.add(event.timestamp());
+            }
+            if ("PAYMENT_SUCCESS".equalsIgnoreCase(event.type())) {
+                paymentsSuccess.increment();
+            }
+            if ("PAYMENT_FAILED".equalsIgnoreCase(event.type())) {
+                paymentsFailed.increment();
+            }
+            eventSink.tryEmitNext(event);
+        });
     }
 
     public Flux<AdminEvent> eventStream() {
