@@ -1,0 +1,3 @@
+CREATE DATABASE products OWNER shop;
+CREATE DATABASE orders OWNER shop;
+CREATE DATABASE payments OWNER shop;
